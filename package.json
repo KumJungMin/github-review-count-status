@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@octokit/core": "^4.2.0",
+    "isomorphic-fetch": "^3.0.0",
     "vue": "^3.2.45"
   },
   "devDependencies": {
