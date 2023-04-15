@@ -1,66 +1,15 @@
 <script setup lang="ts">
 import { Octokit } from "@octokit/core";
 import { ref } from "vue";
+import { useAssigneer } from "./composables/use-assigneer";
 
-// --you need to change these values--
-const ORG = ""; // your organization name or your user name
-const MY_GITHUB_ID = ""; // your github id
-const AUTH_TOKEN = ""; // your github auth token
-//------------------------------------
-
-const octokit = new Octokit({ auth: AUTH_TOKEN });
-
-const isLoading = ref<boolean>(false);
-const repoNames = ref<string[]>([]);
-const assginedCount = ref<number>(0);
-
-async function getOwnerRepoNames() {
-  // if your ora has more than 100 repos, you need to change this value
-  const PER_PAGE = 100;
-  const { data } = await octokit.request("GET /orgs/{org}/repos", {
-    org: ORG,
-    per_page: PER_PAGE,
-  });
-  repoNames.value = data.map((v) => v.name);
-}
-async function getPRList() {
-  const assigneerList = await Promise.all(
-    repoNames.value.map((repoName) => _getRepoAsssigneers(repoName))
-  );
-  const filteredList = assigneerList.map((data) =>
-    data
-      .flat()
-      .map(({ login }) => login)
-      .filter(Boolean)
-  );
-  const countMap = {};
-  filteredList.flat().forEach((login) => {
-    countMap[login] = (countMap[login] || 0) + 1;
-  });
-  assginedCount.value = countMap[MY_GITHUB_ID];
-}
-async function _getRepoAsssigneers(repoName: string) {
-  const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
-    owner: ORG,
-    repo: repoName,
-  });
-  return data.map((v) => v?.requested_reviewers);
-}
-
-async function initalization() {
-  isLoading.value = true;
-  try {
-    await getOwnerRepoNames();
-    await getPRList();
-  } finally {
-    isLoading.value = false;
-  }
-}
-initalization();
+const { isLoading, countMap, assginedCount } = useAssigneer();
+// useAssigneer
 </script>
 
 <template>
   <div>{{ isLoading ? "loading" : assginedCount }}</div>
+  {{ countMap }}
 </template>
 
 <style scoped>
