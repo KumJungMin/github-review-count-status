@@ -24,23 +24,27 @@ async function getOwnerRepoNames() {
   repoNames.value = data.map((v) => v.name);
 }
 async function getPRList() {
-  let result = 0;
-  const datas = await Promise.all(
+  const assigneerList = await Promise.all(
     repoNames.value.map((repoName) => _getRepoAsssigneers(repoName))
   );
-  datas.forEach((data) => {
-    data.forEach((assigneer) => {
-      if (assigneer === MY_GITHUB_ID) result += 1;
-    });
+  const filteredList = assigneerList.map((data) =>
+    data
+      .flat()
+      .map(({ login }) => login)
+      .filter(Boolean)
+  );
+  const countMap = {};
+  filteredList.flat().forEach((login) => {
+    countMap[login] = (countMap[login] || 0) + 1;
   });
-  assginedCount.value = result;
+  assginedCount.value = countMap[MY_GITHUB_ID];
 }
 async function _getRepoAsssigneers(repoName: string) {
   const { data } = await octokit.request("GET /repos/{owner}/{repo}/pulls", {
     owner: ORG,
     repo: repoName,
   });
-  return data.map((v) => v?.assignee?.login);
+  return data.map((v) => v?.requested_reviewers);
 }
 
 async function initalization() {
